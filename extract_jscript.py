@@ -4,17 +4,25 @@ import argparse
 import os
 import numpy as np
 
-def extract_jscript(pdf_path, output_path):
+def extract_jscript(pdf_path, output_path, limit_pages=None):
     """
     Extracts text from a Japanese PDF script using OCR.
     
     Args:
         pdf_path (str): Path to the input PDF file.
         output_path (str): Path to save the extracted text.
+        limit_pages (int): Optional limit on number of pages to process.
     """
     print(f"Converting PDF to images: {pdf_path}...")
     # Convert PDF to list of images (one per page)
-    images = convert_from_path(pdf_path)
+    # If limit is set, we can optimize by only converting what we need, 
+    # but convert_from_path loads all by default unless we use first_page/last_page
+    # simpler to just slice list if not optimizing memory heavily yet
+    # Actually pdf2image supports first_page and last_page
+    if limit_pages:
+        images = convert_from_path(pdf_path, last_page=limit_pages)
+    else:
+        images = convert_from_path(pdf_path)
     
     print(f"Initializing EasyOCR for Japanese...")
     reader = easyocr.Reader(['ja'], gpu=False) # Set gpu=True if CUDA is available, but Mac usually uses CPU/MPS for this via easyocr logic or cpu fallback
@@ -46,6 +54,8 @@ if __name__ == "__main__":
     parser.add_argument("--pdf", required=True, help="Path to input PDF file")
     parser.add_argument("--output", required=True, help="Path to output text file")
     
+    parser.add_argument("--limit_pages", type=int, help="Limit number of pages to process (for testing)")
+    
     args = parser.parse_args()
     
-    extract_jscript(args.pdf, args.output)
+    extract_jscript(args.pdf, args.output, args.limit_pages)

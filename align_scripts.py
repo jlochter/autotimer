@@ -71,26 +71,15 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     """
 
     print("Sending request to Gemini 2.5 Flash Lite...")
-    model_id = 'gemini-2.0-flash-lite-preview-02-05' 
+    model_id = 'gemini-2.5-flash-lite' 
 
-    try:
-        response = client.models.generate_content(
-            model=model_id,
-            contents=prompt,
-            config={
-                'response_mime_type': 'application/json'
-            }
-        )
-    except Exception as e:
-        print(f"Error with model '{model_id}': {e}")
-        print("Falling back to 'gemini-1.5-flash'...")
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt,
-            config={
-                'response_mime_type': 'application/json'
-            }
-        )
+    response = client.models.generate_content(
+        model=model_id,
+        contents=prompt,
+        config={
+            'response_mime_type': 'application/json'
+        }
+    )
 
     json_content = response.text
     
