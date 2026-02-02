@@ -11,6 +11,23 @@ It leverages **faster-whisper** for transcription, **EasyOCR** for script extrac
 - **Smart Alignment**: Uses Google's Gemini models to align the "noisy" Whisper transcription with the "clean" PDF text, preserving the timestamps of the audio but the text of the script.
 - **Privacy Focused**: Only text is sent to the Gemini API (no audio/video uploads), saving bandwidth and tokens.
 
+## Application Flow
+
+```mermaid
+graph TD
+    A[Video File (.mp4)] -->|generate_whisper.py| B(Whisper JSON)
+    C[Script File (.pdf)] -->|extract_jscript.py| D(Script Text)
+    
+    B --> E{align_scripts.py}
+    D --> E
+    
+    E -->|Gemini API| F[Aligned Subtitles (.ass)]
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style C fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#9f9,stroke:#333,stroke-width:4px
+```
+
 ## Prerequisites
 
 - **Python 3.9+**
