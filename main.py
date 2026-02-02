@@ -4,6 +4,9 @@ import sys
 from generate_whisper import generate_whisper_script
 from extract_jscript import extract_jscript
 from align_scripts import align_scripts
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main():
     parser = argparse.ArgumentParser(description="Japanese Video Script Alignment Tool")

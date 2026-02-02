@@ -3,6 +3,9 @@ import json
 import os
 import argparse
 import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def format_time_ass(seconds):
     """Formats seconds into ASS timestamp format: H:MM:SS.cs"""

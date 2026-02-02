@@ -32,8 +32,15 @@ pip install -r requirements.txt
 
 ### 1. Set your API Key
 
-Export your Gemini API key as an environment variable:
+You can configure your API key in a `.env` file (recommended) or as an environment variable.
 
+**Option A: Using .env (Recommended)**
+Create a `.env` file in the project root:
+```ini
+GEMINI_API_KEY=your_api_key_here
+```
+
+**Option B: Environment Variable**
 ```bash
 export GEMINI_API_KEY="your_api_key_here"
 ```

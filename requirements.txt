@@ -5,3 +5,4 @@ google-genai
 ffmpeg-python
 numpy
 opencv-python-headless
+python-dotenv
