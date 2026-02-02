@@ -3,22 +3,15 @@ import json
 import os
 import argparse
 import datetime
+import pysubs2
 from dotenv import load_dotenv
 
 load_dotenv()
 
-def format_time_ass(seconds):
-    """Formats seconds into ASS timestamp format: H:MM:SS.cs"""
-    td = datetime.timedelta(seconds=seconds)
-    # Total seconds to h:mm:ss.cs
-    hours, remainder = divmod(td.seconds, 3600)
-    minutes, seconds_int = divmod(remainder, 60)
-    centiseconds = int(td.microseconds / 10000)
-    return f"{hours}:{minutes:02}:{seconds_int:02}.{centiseconds:02}"
-
 def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     """
     Aligns Whisper transcription with OCR text using Gemini 2.5 Flash Lite.
+    Generates ASS subtitles using pysubs2.
     
     Args:
         whisper_path (str): Path to Whisper JSON output.
@@ -42,9 +35,6 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
         ocr_text = f.read()
 
     # Prepare prompt
-    # We will send a subset or the full set depending on size. 
-    # For a full video, we might need to chunk, but for this POC we'll try full context or assume it fits in Gemini's large context window (1M+ tokens for Flash).
-    
     whisper_text_block = ""
     for seg in whisper_data:
         whisper_text_block += f"ID:{seg['id']} T:{seg['start']}-{seg['end']} Text:{seg['text']}\n"
@@ -53,26 +43,23 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     You are an expert subtitle aligner. 
     I have a noisy phonetic Japanese transcription from Whisper (with timestamps) and a clean official script extracted via OCR (without timestamps and potentially with different line breaks).
     
-    Your task is to generate a SubStation Alpha (.ass) subtitle file.
+    Your task is to return a JSON list of subtitle events.
     1. Match the meaning/kanji from the OCR Text to the corresponding timestamps in the Whisper Data.
     2. Replace the Whisper text with the correct clean OCR text.
-    3. Identify the SPEAKER/ACTOR for each line from the OCR text (e.g., if it says "Naruto: Hello", the Name is "Naruto").
-    4. Place the identified Speaker Name in the 'Name' field of the ASS event. If unknown, leave it blank.
-    5. If the OCR text has extra lines not found in audio, or vice versa, do your best to align what is audible.
-    6. Output ONLY the .ass file content.
+    3. Identify the SPEAKER/ACTOR for each line from the OCR text (e.g., if it says "Naruto: Hello", the actor is "Naruto").
+    4. If the OCR text has extra lines not found in audio, or vice versa, do your best to align what is audible.
     
-    Here is the standard ASS header to use:
-    [Script Info]
-    ScriptType: v4.00+
-    PlayResX: 1920
-    PlayResY: 1080
-    
-    [V4+ Styles]
-    Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-    Style: Default,Arial,50,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,1,2,2,2,10,10,10,1
-
-    [Events]
-    Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+    Output Format:
+    Return ONLY a raw JSON list of objects. Do not wrap in markdown code blocks.
+    [
+        {{
+            "start": float, // Start time in seconds
+            "end": float,   // End time in seconds
+            "actor": "string or null", // Name of speaker/actor
+            "text": "string" // The aligned subtitle text
+        }},
+        ...
+    ]
 
     ---
     WHISPER DATA:
@@ -81,43 +68,67 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     ---
     OCR TEXT:
     {ocr_text}
-    
-    ---
-    Generate the full .ass file content below:
     """
 
     print("Sending request to Gemini 2.5 Flash Lite...")
-    # Trying the requested model. If it fails, fallback strategy might be needed but Client will raise error.
-    # Note: 'gemini-2.0-flash-lite-preview-02-05' is the latest string referenced in some docs, or just 'gemini-2.0-flash'.
-    # I'll try 'gemini-2.0-flash-lite-preview-02-05' as per user hint "gemini 2.5 flash lite" (likely 2.0 flash lite preview).
     model_id = 'gemini-2.0-flash-lite-preview-02-05' 
 
     try:
         response = client.models.generate_content(
             model=model_id,
-            contents=prompt
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json'
+            }
         )
     except Exception as e:
         print(f"Error with model '{model_id}': {e}")
         print("Falling back to 'gemini-1.5-flash'...")
         response = client.models.generate_content(
             model='gemini-1.5-flash',
-            contents=prompt
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json'
+            }
         )
 
-    ass_content = response.text
+    json_content = response.text
     
-    # Strip markdown code blocks if present
-    if ass_content.startswith("```"):
-        ass_content = ass_content.split("\n", 1)[1]
-    if ass_content.endswith("```"):
-        ass_content = ass_content.rsplit("\n", 1)[0]
+    # Strip markdown code blocks if present (just in case model ignores instructions)
+    if json_content.startswith("```"):
+        json_content = json_content.split("\n", 1)[1]
+    if json_content.endswith("```"):
+        json_content = json_content.rsplit("\n", 1)[0]
+        
+    try:
+        aligned_data = json.loads(json_content)
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse JSON response: {e}")
+        # Save raw response for debugging
+        with open(output_path + ".debug.txt", "w") as f:
+            f.write(json_content)
+        raise
+
+    print("Generating ASS file using pysubs2...")
+    subs = pysubs2.SSAFile()
+    
+    # Optional: Customize default style
+    style = pysubs2.SSAStyle(fontsize=50, primarycolor=pysubs2.Color(255, 255, 255))
+    subs.styles["Default"] = style
+    
+    for item in aligned_data:
+        start_ms = int(item.get("start", 0) * 1000)
+        end_ms = int(item.get("end", 0) * 1000)
+        text = item.get("text", "")
+        actor = item.get("actor", "") or ""
+        
+        event = pysubs2.SSAEvent(start=start_ms, end=end_ms, text=text, name=actor)
+        subs.events.append(event)
     
     print(f"Saving aligned subtitles to {output_path}...")
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(ass_content)
+    subs.save(output_path)
         
-    return ass_content
+    return output_path
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Align Whisper JSON and OCR Text to ASS subtitles.")

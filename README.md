@@ -8,7 +8,8 @@ It leverages **faster-whisper** for transcription, **EasyOCR** for script extrac
 
 - **Transcription**: Uses `faster-whisper` (default `large-v3`) to generate timestamped Japanese text from video files.
 - **OCR Extraction**: Converts PDF scripts to text using `pdf2image` and `EasyOCR`.
-- **Smart Alignment**: Uses Google's Gemini models to align the "noisy" Whisper transcription with the "clean" PDF text, preserving the timestamps of the audio but the text of the script.
+- **Smart Alignment**: Uses Google's Gemini models to align the "noisy" Whisper transcription with the "clean" PDF text.
+- **Robust Generation**: Uses **pysubs2** to programmatic generate valid SubStation Alpha (.ass) files, ensuring compatibility with all players.
 - **Actor Extraction**: Automatically identifies speaker names from the script and populates the SubStation Alpha "Name" field.
 - **Privacy Focused**: Only text is sent to the Gemini API (no audio/video uploads), saving bandwidth and tokens.
 
