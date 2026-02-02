@@ -56,8 +56,10 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     Your task is to generate a SubStation Alpha (.ass) subtitle file.
     1. Match the meaning/kanji from the OCR Text to the corresponding timestamps in the Whisper Data.
     2. Replace the Whisper text with the correct clean OCR text.
-    3. If the OCR text has extra lines not found in audio, or vice versa, do your best to align what is audible.
-    4. Output ONLY the .ass file content.
+    3. Identify the SPEAKER/ACTOR for each line from the OCR text (e.g., if it says "Naruto: Hello", the Name is "Naruto").
+    4. Place the identified Speaker Name in the 'Name' field of the ASS event. If unknown, leave it blank.
+    5. If the OCR text has extra lines not found in audio, or vice versa, do your best to align what is audible.
+    6. Output ONLY the .ass file content.
     
     Here is the standard ASS header to use:
     [Script Info]
