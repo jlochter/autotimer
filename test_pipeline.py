@@ -24,10 +24,10 @@ def main():
         sys.exit(1)
 
     # Output files (temporary)
-    video_short = "test_short.mp4"
-    whisper_out = "test_whisper.json"
-    ocr_out = "test_ocr.txt"
-    final_ass = "test_final.ass"
+    video_short = os.path.join("output", "test_short.mp4")
+    whisper_out = os.path.join("output", "test_whisper.json")
+    ocr_out = os.path.join("output", "test_ocr.txt")
+    final_ass = os.path.join("output", "test_final.ass")
 
     # Clean up previous run
     for f in [video_short, whisper_out, ocr_out, final_ass]:

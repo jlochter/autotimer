@@ -37,3 +37,4 @@ venv/
 *.mp4
 *.pdf
 test_*
+output/

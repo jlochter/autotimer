@@ -20,8 +20,12 @@ def main():
 
     # Derived paths for intermediate files
     base_name = os.path.splitext(os.path.basename(args.video))[0]
-    whisper_json_path = f"{base_name}_whisper.json"
-    script_text_path = f"{base_name}_script.txt"
+    output_dir = "output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    whisper_json_path = os.path.join(output_dir, f"{base_name}_whisper.json")
+    script_text_path = os.path.join(output_dir, f"{base_name}_script.txt")
 
     print("=== Step 1: Generating Whisper Transcription ===")
     if os.path.exists(whisper_json_path):
