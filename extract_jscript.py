@@ -3,6 +3,8 @@ from pdf2image import convert_from_path
 import argparse
 import os
 import numpy as np
+import cv2
+from tqdm import tqdm
 
 def extract_jscript(pdf_path, output_path, limit_pages=None):
     """
@@ -20,23 +22,30 @@ def extract_jscript(pdf_path, output_path, limit_pages=None):
     # simpler to just slice list if not optimizing memory heavily yet
     # Actually pdf2image supports first_page and last_page
     if limit_pages:
-        images = convert_from_path(pdf_path, last_page=limit_pages)
+        images = convert_from_path(pdf_path, last_page=limit_pages, dpi=300)
     else:
-        images = convert_from_path(pdf_path)
+        images = convert_from_path(pdf_path, dpi=300)
     
     print(f"Initializing EasyOCR for Japanese...")
     reader = easyocr.Reader(['ja'], gpu=False) # Set gpu=True if CUDA is available, but Mac usually uses CPU/MPS for this via easyocr logic or cpu fallback
     
     full_text = []
     
-    for i, image in enumerate(images):
-        print(f"Processing page {i+1}/{len(images)}...")
-        # EasyOCR expects a file path, numpy array, or bytes. 
-        # pdf2image returns PIL images, so we convert to numpy array.
+    for image in tqdm(images, desc="Processing pages", unit="page"):
+        # Convert PIL image to numpy array
         image_np = np.array(image)
+
+        # Preprocessing with OpenCV
+        # 1. Convert to grayscale
+        gray = cv2.cvtColor(image_np, cv2.COLOR_RGB2GRAY)
         
+        # 2. Apply thresholding (Otsu's binarization) to get black text on white background
+        # This helps significantly with noise and contrast
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        # EasyOCR works on numpy arrays
         # detail=0 returns just the text list
-        result = reader.readtext(image_np, detail=0) 
+        result = reader.readtext(binary, detail=0) 
         
         page_text = "\n".join(result)
         full_text.append(page_text)

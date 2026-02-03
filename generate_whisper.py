@@ -1,9 +1,10 @@
-from faster_whisper import WhisperModel
+from faster_whisper import WhisperModel, BatchedInferencePipeline
 import json
 import os
 import argparse
+from tqdm import tqdm
 
-def generate_whisper_script(video_path, output_path, model_size="large-v3", device="auto", compute_type="default"):
+def generate_whisper_script(video_path, output_path, model_size="medium", device="auto", compute_type="default"):
     """
     Transcribes audio from a video file using faster-whisper.
     
@@ -16,22 +17,27 @@ def generate_whisper_script(video_path, output_path, model_size="large-v3", devi
     """
     print(f"Loading Whisper model: {model_size} on {device}...")
     model = WhisperModel(model_size, device=device, compute_type=compute_type)
+    batched_model = BatchedInferencePipeline(model=model)
 
     print(f"Transcribing {video_path}...")
-    segments, info = model.transcribe(video_path, beam_size=5, language="ja")
+    segments, info = batched_model.transcribe(video_path, batch_size=16, language="ja")
 
+    total_duration = round(info.duration, 2)
     print(f"Detected language '{info.language}' with probability {info.language_probability}")
 
     transcript_data = []
-    for segment in segments:
-        segment_data = {
-            "id": segment.id,
-            "start": segment.start,
-            "end": segment.end,
-            "text": segment.text
-        }
-        transcript_data.append(segment_data)
-        # print(f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}")
+    with tqdm(total=total_duration, unit="s", desc="Transcribing") as pbar:
+        for segment in segments:
+            segment_data = {
+                "id": segment.id,
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text
+            }
+            transcript_data.append(segment_data)
+            
+            segment_duration = segment.end - segment.start
+            pbar.update(segment_duration)
 
     print(f"Saving transcription to {output_path}...")
     with open(output_path, "w", encoding="utf-8") as f:

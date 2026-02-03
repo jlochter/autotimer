@@ -14,7 +14,7 @@ def main():
     parser.add_argument("--script", required=True, help="Path to input PDF script")
     parser.add_argument("--output", default="aligned.ass", help="Path to output ASS file")
     parser.add_argument("--api_key", help="Gemini API Key (optional if GEMINI_API_KEY env var is set)")
-    parser.add_argument("--whisper_model", default="large-v3", help="Whisper model size (default: large-v3)")
+    parser.add_argument("--whisper_model", default="medium", help="Whisper model size (default: large-v3)")
     
     args = parser.parse_args()
 

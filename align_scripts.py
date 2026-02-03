@@ -81,6 +81,10 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
         }
     )
 
+    print("Request finished.")
+    if response.usage_metadata:
+        print(f"Token Usage: Prompt: {response.usage_metadata.prompt_token_count}, Candidates: {response.usage_metadata.candidates_token_count}, Total: {response.usage_metadata.total_token_count}")
+
     json_content = response.text
     
     # Strip markdown code blocks if present (just in case model ignores instructions)
