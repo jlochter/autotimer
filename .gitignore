@@ -26,6 +26,9 @@ venv/
 .env
 .venv
 
+# OS
+.DS_Store
+
 # IDE
 .vscode/
 .idea/
@@ -35,6 +38,7 @@ venv/
 *_script.txt
 *.ass
 *.mp4
+*.mov
 *.pdf
 test_*
 output/

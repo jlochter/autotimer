@@ -37,7 +37,7 @@ def main():
     if os.path.exists(script_text_path):
         print(f"File {script_text_path} already exists, skipping OCR (delete file to re-run).")
     else:
-        extract_jscript(args.script, script_text_path)
+        extract_jscript(args.script, script_text_path, api_key=args.api_key)
 
     print("\n=== Step 3: Aligning Scripts ===")
     align_scripts(whisper_json_path, script_text_path, args.output, api_key=args.api_key)
