@@ -38,6 +38,20 @@ flowchart TD
 - **FFmpeg**: Required for audio extraction (usually installed with faster-whisper/audio libraries, or `brew install ffmpeg`).
 - **Google Gemini API Key**: You need a valid API key from Google AI Studio.
 
+## How to Get a Gemini API Key
+
+1.  Visit **[Google AI Studio](https://aistudio.google.com/)**.
+2.  Sign in with your Google Account.
+3.  Click on **"Get API key"** in the sidebar.
+4.  Click **"Create API key"** (either in a new project or an existing one).
+5.  Copy the generated key and keep it safe.
+
+> [!IMPORTANT]
+> **Privacy and Data Usage:**
+> - **Free Tier:** Google may use data (prompts and outputs) from free tier users to improve their products and train their models.
+> - **Paid/Enterprise Plans:** Only users on paid plans (via Google Cloud Vertex AI or specific AI Studio paid tiers) have their data kept private and excluded from model training.
+> - For highly sensitive scripts, consider the privacy implications of using a free API key.
+
 ## Installation
 
 1. Clone this repository (if applicable) or download the source.
