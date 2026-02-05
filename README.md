@@ -2,15 +2,15 @@
 
 AutoTimer is a Python tool designed to create perfect `.ass` subtitles for Japanese videos by aligning audio transcription with an official PDF script. 
 
-It leverages **faster-whisper** for transcription, **EasyOCR** for script extraction, and **Gemini 2.5 Flash Lite** (via `google-genai`) for intelligent semantic alignment, ensuring that the final subtitles use the correct Kanji and official phrasing from your script, rather than just phonetic transcription.
+It leverages **faster-whisper** for transcription and **Gemini 2.5 Flash** (via `google-genai`) for script extraction and intelligent semantic alignment. This ensures that the final subtitles use the correct Kanji and official phrasing from your script, rather than just phonetic transcription.
 
 ## Features
 
-- **Transcription**: Uses `faster-whisper` (default `large-v3`) to generate timestamped Japanese text from video files.
-- **OCR Extraction**: Converts PDF scripts to text using `pdf2image` and `EasyOCR`.
-- **Smart Alignment**: Uses Google's Gemini models to align the "noisy" Whisper transcription with the "clean" PDF text.
-- **Robust Generation**: Uses **pysubs2** to programmatic generate valid SubStation Alpha (.ass) files, ensuring compatibility with all players.
-- **Actor Extraction**: Automatically identifies speaker names from the script and populates the SubStation Alpha "Name" field.
+- **Transcription**: Uses `faster-whisper` (default `turbo`) to generate timestamped Japanese text from video files.
+- **Script Extraction**: Directly extracts Japanese text from PDF scripts using Gemini 2.5 Flash.
+- **Smart Alignment**: Uses Gemini 2.5 Flash with Thinking to align the "noisy" Whisper transcription with the "clean" script text.
+- **Robust Generation**: Uses **pysubs2** to generate valid SubStation Alpha (.ass) files.
+- **Actor Extraction**: Automatically identifies speaker names from the script and populates the subtitle "Name" field.
 - **Privacy Focused**: Only text is sent to the Gemini API (no audio/video uploads), saving bandwidth and tokens.
 
 ## Application Flow
@@ -33,9 +33,7 @@ flowchart TD
 ## Prerequisites
 
 - **Python 3.9+**
-- **Poppler**: Required for PDF processing.
-  - macOS: `brew install poppler`
-- **FFmpeg**: Required for audio extraction (usually installed with faster-whisper/audio libraries, or `brew install ffmpeg`).
+- **FFmpeg**: Required for audio processing.
 - **Google Gemini API Key**: You need a valid API key from Google AI Studio.
 
 ## How to Get a Gemini API Key

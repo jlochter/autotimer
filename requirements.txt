@@ -1,10 +1,4 @@
 faster-whisper
-easyocr
-pdf2image
 google-genai
-ffmpeg-python
-numpy
-opencv-python-headless
 python-dotenv
 pysubs2
-tqdm
