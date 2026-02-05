@@ -14,7 +14,8 @@ def main():
     parser.add_argument("--script", required=True, help="Path to input PDF script")
     parser.add_argument("--output", default="aligned.ass", help="Path to output ASS file")
     parser.add_argument("--api_key", help="Gemini API Key (optional if GEMINI_API_KEY env var is set)")
-    parser.add_argument("--whisper_model", default="medium", help="Whisper model size (default: large-v3)")
+    parser.add_argument("--whisper_model", default="turbo", help="Whisper model size (default: turbo)")
+    parser.add_argument("--duration", type=float, help="Limit transcription to first N seconds")
     
     args = parser.parse_args()
 
@@ -28,10 +29,12 @@ def main():
     script_text_path = os.path.join(output_dir, f"{base_name}_script.txt")
 
     print("=== Step 1: Generating Whisper Transcription ===")
-    if os.path.exists(whisper_json_path):
+    if os.path.exists(whisper_json_path) and not args.duration:
          print(f"File {whisper_json_path} already exists, skipping transcription (delete file to re-run).")
     else:
-        generate_whisper_script(args.video, whisper_json_path, model_size=args.whisper_model)
+        if args.duration:
+            print(f"Duration limit set to {args.duration}s. Forced re-run of transcription.")
+        generate_whisper_script(args.video, whisper_json_path, model_size=args.whisper_model, duration=args.duration)
 
     print("\n=== Step 2: Extracting Japanese Text from PDF ===")
     if os.path.exists(script_text_path):

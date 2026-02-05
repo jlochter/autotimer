@@ -1,8 +1,8 @@
 from google import genai
+from google.genai import types
 import json
 import os
 import argparse
-import datetime
 import pysubs2
 from dotenv import load_dotenv
 
@@ -10,7 +10,7 @@ load_dotenv()
 
 def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     """
-    Aligns Whisper transcription with OCR text using Gemini 2.5 Flash Lite.
+    Aligns Whisper transcription with OCR text using Gemini 2.5 Flash.
     Generates ASS subtitles using pysubs2.
     
     Args:
@@ -34,92 +34,90 @@ def align_scripts(whisper_path, ocr_path, output_path, api_key=None):
     with open(ocr_path, "r", encoding="utf-8") as f:
         ocr_text = f.read()
 
-    # Prepare prompt
-    whisper_text_block = ""
-    for seg in whisper_data:
-        whisper_text_block += f"ID:{seg['id']} T:{seg['start']}-{seg['end']} Text:{seg['text']}\n"
+    formatted_transcription = []
+    for t in whisper_data:
+        formatted_transcription.append({
+            "start": float(t['start']),
+            "end": float(t['end']),
+            "text": t['text']
+        })
         
     prompt = f"""
-    You are an expert subtitle aligner. 
-    I have a noisy phonetic Japanese transcription from Whisper (with timestamps) and a clean official script extracted via OCR (without timestamps and potentially with different line breaks).
-    
-    Your task is to return a JSON list of subtitle events.
-    1. Match the meaning/kanji from the OCR Text to the corresponding timestamps in the Whisper Data.
-    2. Replace the Whisper text with the correct clean OCR text.
-    3. Identify the SPEAKER/ACTOR for each line from the OCR text (e.g., if it says "Naruto: Hello", the actor is "Naruto").
-    4. If the OCR text has extra lines not found in audio, or vice versa, do your best to align what is audible.
-    
-    Output Format:
-    Return ONLY a raw JSON list of objects. Do not wrap in markdown code blocks.
-    [
-        {{
-            "start": float, // Start time in seconds
-            "end": float,   // End time in seconds
-            "actor": "string or null", // Name of speaker/actor
-            "text": "string" // The aligned subtitle text
-        }},
-        ...
-    ]
+You are an expert in Japanese script analysis and transcription.
+Your task is to align an automatic transcription with a golden reference script.
 
-    ---
-    WHISPER DATA:
-    {whisper_text_block}
-    
-    ---
-    OCR TEXT:
-    {ocr_text}
-    """
+The automatic transcription has many dialogues with start, end and text properties.
+The golden reference script has each dialogue, with actor and text properties in the format ACTOR:TEXT.
 
-    print("Sending request to Gemini 2.5 Flash Lite...")
-    model_id = 'gemini-2.5-flash-lite' 
+Your task is fix or replace the text in the whisper transcription the text using golden reference. Also figure out who is the actor.
+
+Output in the format:
+START; END; ACTOR; TEXT
+
+Golden Reference:
+{ocr_text}
+
+Whisper Transcriptions:
+{formatted_transcription}
+
+Do not output comments or anything else.
+"""
+
+    print("Sending request to Gemini 2.5 Flash with Thinking...")
+    model_id = 'gemini-2.5-flash' 
 
     response = client.models.generate_content(
         model=model_id,
-        contents=prompt,
-        config={
-            'response_mime_type': 'application/json'
-        }
+        contents=[prompt],
+        config=types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_budget=20000)
+        )
     )
 
     print("Request finished.")
     if response.usage_metadata:
         print(f"Token Usage: Prompt: {response.usage_metadata.prompt_token_count}, Candidates: {response.usage_metadata.candidates_token_count}, Total: {response.usage_metadata.total_token_count}")
 
-    json_content = response.text
-    
-    # Strip markdown code blocks if present (just in case model ignores instructions)
-    if json_content.startswith("```"):
-        json_content = json_content.split("\n", 1)[1]
-    if json_content.endswith("```"):
-        json_content = json_content.rsplit("\n", 1)[0]
-        
-    try:
-        aligned_data = json.loads(json_content)
-    except json.JSONDecodeError as e:
-        print(f"Failed to parse JSON response: {e}")
-        # Save raw response for debugging
-        with open(output_path + ".debug.txt", "w") as f:
-            f.write(json_content)
-        raise
-
     print("Generating ASS file using pysubs2...")
     subs = pysubs2.SSAFile()
-    
-    # Optional: Customize default style
-    style = pysubs2.SSAStyle(fontsize=50, primarycolor=pysubs2.Color(255, 255, 255))
-    subs.styles["Default"] = style
-    
-    for item in aligned_data:
-        start_ms = int(item.get("start", 0) * 1000)
-        end_ms = int(item.get("end", 0) * 1000)
-        text = item.get("text", "")
-        actor = item.get("actor", "") or ""
-        
-        event = pysubs2.SSAEvent(start=start_ms, end=end_ms, text=text, name=actor)
-        subs.events.append(event)
-    
+
+    # Set default style
+    default_style = pysubs2.SSAStyle(
+        fontname="Arial",
+        fontsize=22,
+        alignment=2 # Bottom-center
+    )
+    subs.styles["Default"] = default_style
+
+    lines = response.text.strip().split('\n')
+    for line in lines:
+        if not line.strip():
+            continue
+
+        parts = [p.strip() for p in line.split(';')]
+        if len(parts) < 4:
+            continue
+
+        try:
+            start_sec = float(parts[0])
+            end_sec = float(parts[1])
+            actor = parts[2]
+            text = parts[3]
+
+            # pysubs2 uses milliseconds for start and end times
+            event = pysubs2.SSAEvent(
+                start=int(start_sec * 1000),
+                end=int(end_sec * 1000),
+                text=text,
+                name=actor
+            )
+            subs.append(event)
+        except ValueError:
+            continue
+
     print(f"Saving aligned subtitles to {output_path}...")
     subs.save(output_path)
+    print(f"Exported {len(subs)} lines.")
         
     return output_path
 
