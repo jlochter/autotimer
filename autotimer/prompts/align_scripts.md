@@ -1,13 +1,27 @@
 You are an expert in Japanese script analysis and transcription.
-Your task is to align an automatic transcription with a golden reference script.
+Your task is to align an automatic transcription (Whisper) with a golden reference script (JScript).
 
-The automatic transcription has many dialogues with start, end and text properties.
-The golden reference script has each dialogue, with actor and text properties in the format ACTOR:TEXT.
+### Instructions:
+1. **Accuracy**: Each Whisper segment's text must be corrected to match the exact wording of the Golden Reference.
+2. **Segmentation**: If a single sentence from the Golden Reference is split into multiple Whisper segments, keep them separate but correct each segment to contain the corresponding portion of the reference text.
+3. **Attribution**: Assign the correct ACTOR from the Golden Reference to each segment based on the dialogue flow.
+4. **Format**: Output only the aligned segments in the format: `START; END; ACTOR; TEXT`.
 
-Your task is fix or replace the text in the whisper transcription the text using golden reference. Also figure out who is the actor.
+### Few-Shot Example:
+**Golden Reference:**
+ナレーション: 今日はとてもいい天気ですね。どこかへ出かけたくなります。
 
-Output in the format:
-START; END; ACTOR; TEXT
+**Whisper Transcription:**
+0.0; 2.5; 今日はとても
+2.5; 5.0; いい天気ですねどこかへ
+5.0; 8.0; 出かけたくなります
+
+**Aligned Result:**
+0.0; 2.5; ナレーション; 今日はとても
+2.5; 5.0; ナレーション; いい天気ですね。どこかへ
+5.0; 8.0; ナレーション; 出かけたくなります。
+
+---
 
 Golden Reference:
 {jscript_text}
