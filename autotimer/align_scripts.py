@@ -57,12 +57,46 @@ def align_scripts(transcription, jscript_text, output_path, api_key):
     print(f"  Generating ASS subtitle file...")
     subs = pysubs2.SSAFile()
 
-    default_style = pysubs2.SSAStyle(
-        fontname="Arial",
+    # Define Styles
+    subs.styles["Default"] = pysubs2.SSAStyle(
+        fontname="Trebuchet MS",
         fontsize=22,
-        alignment=2,  # Bottom-center
+        primarycolor=pysubs2.Color.from_string("&H00FFFFFF"),
+        secondarycolor=pysubs2.Color.from_string("&H000000FF"),
+        outlinecolor=pysubs2.Color.from_string("&H00000000"),
+        backcolor=pysubs2.Color.from_string("&H00000000"),
+        bold=True,
+        scalex=100.0,
+        scaley=100.0,
+        borderstyle=1,
+        outline=2.0,
+        shadow=1.0,
+        alignment=2,
+        marginl=40,
+        marginr=40,
+        marginv=15,
+        encoding=0
     )
-    subs.styles["Default"] = default_style
+
+    subs.styles["Sign"] = pysubs2.SSAStyle(
+        fontname="Tahoma",
+        fontsize=22,
+        primarycolor=pysubs2.Color.from_string("&H00000000"),
+        secondarycolor=pysubs2.Color.from_string("&H000000FF"),
+        outlinecolor=pysubs2.Color.from_string("&H00FFFFFF"),
+        backcolor=pysubs2.Color.from_string("&H00000000"),
+        bold=True,
+        scalex=100.0,
+        scaley=100.0,
+        borderstyle=1,
+        outline=2.0,
+        shadow=0.0,
+        alignment=2,
+        marginl=40,
+        marginr=40,
+        marginv=15,
+        encoding=1
+    )
 
     lines = response.text.strip().split("\n")
     for line in lines:
