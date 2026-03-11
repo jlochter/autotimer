@@ -1,122 +1,62 @@
 # AutoTimer: Japanese Video Script Aligner
 
-AutoTimer is a Python tool designed to create perfect `.ass` subtitles for Japanese videos by aligning audio transcription with an official PDF script. 
+AutoTimer is a Python tool designed to create perfect `.ass` subtitles for Japanese videos by aligning audio transcription with an official PDF/DOCX script.
 
-It leverages **faster-whisper** for transcription and **Gemini 2.5 Flash** (via `google-genai`) for script extraction and intelligent semantic alignment. This ensures that the final subtitles use the correct Kanji and official phrasing from your script, rather than just phonetic transcription.
+It leverages **faster-whisper** (large-v2) for transcription and **Gemini 3 Flash Preview** for script extraction and intelligent semantic alignment.
 
-## Features
+## 🚀 Quick Start (Google Colab)
 
-- **Transcription**: Uses `faster-whisper` (default `turbo`) to generate timestamped Japanese text from video files.
-- **Script Extraction**: Directly extracts Japanese text from PDF scripts using Gemini 2.5 Flash.
-- **Smart Alignment**: Uses Gemini 2.5 Flash with Thinking to align the "noisy" Whisper transcription with the "clean" script text.
-- **Robust Generation**: Uses **pysubs2** to generate valid SubStation Alpha (.ass) files.
-- **Actor Extraction**: Automatically identifies speaker names from the script and populates the subtitle "Name" field.
-- **Privacy Focused**: Only text is sent to the Gemini API (no audio/video uploads), saving bandwidth and tokens.
+The easiest way to use AutoTimer is via the provided Jupyter Notebook. It's designed to run in a single cell on Google Colab with GPU support.
 
-## Application Flow
+1.  Open [AutoTimer.ipynb](AutoTimer.ipynb) in Google Colab.
+2.  Set your `GOOGLE_API_KEY` (Get one at [Google AI Studio](https://aistudio.google.com/)).
+3.  Set your `GDRIVE_PATH` to the folder containing your video and script.
+4.  Run the cell.
 
-```mermaid
-flowchart TD
-    A["Video File (.mp4)"] -->|generate_whisper.py| B("Whisper JSON")
-    C["Script File (.pdf)"] -->|extract_jscript.py| D("Script Text")
-    
-    B --> E{"align_scripts.py"}
-    D --> E
-    
-    E -->|Gemini API| F["Aligned Subtitles (.ass)"]
+The pipeline will:
+- Install AutoTimer directly from GitHub.
+- Mount your Google Drive.
+- Transcribe the video.
+- Extract dialogue from the script.
+- Align them and save the `.ass` subtitle file next to your video.
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#f9f,stroke:#333,stroke-width:2px
-    style F fill:#9f9,stroke:#333,stroke-width:4px
+## 📦 Installation (Local/CLI)
+
+You can install AutoTimer as a Python package directly from GitHub:
+
+```bash
+pip install git+https://github.com/jlochter/autotimer.git
 ```
 
-## Prerequisites
+## 🛠️ Python Usage
+
+```python
+import autotimer
+
+autotimer.run(
+    api_key="YOUR_GEMINI_API_KEY",
+    gdrive_path="/path/to/your/files"
+)
+```
+
+## 📂 Requirements
 
 - **Python 3.9+**
-- **FFmpeg**: Required for audio processing.
-- **Google Gemini API Key**: You need a valid API key from Google AI Studio.
+- **FFmpeg** (automatically installed in Colab)
+- **NVIDIA GPU** (recommended for Whisper `large-v2` speed)
+- **Google Gemini API Key**
 
-## How to Get a Gemini API Key
+## 🏗️ Project Structure
 
-1.  Visit **[Google AI Studio](https://aistudio.google.com/)**.
-2.  Sign in with your Google Account.
-3.  Click on **"Get API key"** in the sidebar.
-4.  Click **"Create API key"** (either in a new project or an existing one).
-5.  Copy the generated key and keep it safe.
+- `autotimer/`: Core Python package.
+  - `pipeline.py`: Main orchestrator (`run` function).
+  - `generate_whisper.py`: Whisper transcription logic.
+  - `extract_jscript.py`: Script extraction via Gemini.
+  - `align_scripts.py`: Semantic alignment via Gemini.
+- `AutoTimer.ipynb`: The single-cell Colab notebook.
+- `pyproject.toml`: Package configuration and dependencies.
 
-> [!IMPORTANT]
-> **Privacy and Data Usage:**
-> - **Free Tier:** Google may use data (prompts and outputs) from free tier users to improve their products and train their models.
-> - **Paid/Enterprise Plans:** Only users on paid plans (via Google Cloud Vertex AI or specific AI Studio paid tiers) have their data kept private and excluded from model training.
-> - For highly sensitive scripts, consider the privacy implications of using a free API key.
-
-## Installation
-
-1. Clone this repository (if applicable) or download the source.
-2. Install Python dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-### 1. Set your API Key
-
-You can configure your API key in a `.env` file (recommended) or as an environment variable.
-
-**Option A: Using .env (Recommended)**
-Create a `.env` file in the project root:
-```ini
-GEMINI_API_KEY=your_api_key_here
-```
-
-**Option B: Environment Variable**
-```bash
-export GEMINI_API_KEY="your_api_key_here"
-```
-
-### 2. Run the Main Script
-
-Run `main.py` with your video file and PDF script:
-
-```bash
-python main.py --video episode_01.mp4 --script script_01.pdf
-```
-
-The output will be saved as `aligned.ass` by default. You can specify a custom output filename:
-
-```bash
-python main.py --video episode_01.mp4 --script script_01.pdf --output episode_01.ass
-```
-
-### 3. Individual Modules
-
-You can also run modules independently:
-
-- **Transcribe only**:
-  ```bash
-  python generate_whisper.py --video ep01.mp4 --output whisper.json
-  ```
-
-- **Extract text only**:
-  ```bash
-  python extract_jscript.py --pdf script.pdf --output script.txt
-  ```
-
-- **Align only**:
-  ```bash
-  python align_scripts.py --whisper whisper.json --ocr script.txt --output subtitles.ass --api_key "YOUR_KEY"
-  ```
-
-## Project Structure
-
-- `main.py`: Orchestrates the entire flow.
-- `generate_whisper.py`: Handles audio transcription.
-- `extract_jscript.py`: Handles PDF OCR extraction.
-- `align_scripts.py`: Handles text alignment using Gemini.
-- `requirements.txt`: Python package dependencies.
-
-## License
+## 📄 License
 
 [MIT](LICENSE)
+

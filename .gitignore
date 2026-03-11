@@ -33,12 +33,9 @@ venv/
 .vscode/
 .idea/
 
-# Project Specific
-*_whisper.json
-*_script.txt
+# Jupyter
+.ipynb_checkpoints/
+
+# Output files
 *.ass
-*.mp4
-*.mov
-*.pdf
-test_*
 output/
