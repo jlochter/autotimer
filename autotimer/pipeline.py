@@ -2,9 +2,9 @@
 
 import os
 import subprocess
-from autotimer.generate_whisper import generate_whisper_script
-from autotimer.extract_jscript import extract_jscript
-from autotimer.align_scripts import align_scripts
+from .generate_whisper import generate_whisper_script
+from .extract_jscript import extract_jscript
+from .align_scripts import align_scripts
 
 
 def run(api_key, gdrive_path, chunk_length=30):
