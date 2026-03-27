@@ -3,6 +3,8 @@ Read the PDF file (Japanese animation script (Tategaki)) and extract all dialogu
 Directionality: The reading order is Vertical (top-to-bottom) and moves Right-to-Left across the page.
 Structure: Treat the vertical lines of text on the far right as the beginning (Column 1). Move leftward for subsequent dialogue/columns.
 
+Ignore Removals: Do NOT extract or output any text that is marked with red lines, strikethroughs, or crosslines (indicating the text was removed).
+
 Task: Extract the text and output it as a list where first item corresponds to the far-right vertical column.
 
 Output each dialogue in a line, following the format:
