@@ -44,7 +44,8 @@ def align_scripts(transcription, jscript_text, output_path, api_key):
         model="gemini-3-flash-preview",
         contents=[prompt],
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=20000)
+            thinking_config=types.ThinkingConfig(thinking_budget=20000),
+            service_tier="flex",
         ),
     )
 
