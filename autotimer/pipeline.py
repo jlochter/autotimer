@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from .generate_whisper import generate_whisper_script
 from .extract_jscript import extract_jscript
 from .align_scripts import align_scripts
@@ -28,7 +29,7 @@ def run(api_key, gdrive_path, chunk_length=30):
 
     # ── Step 1: Find files ──────────────────────────────────────────────
     print("=" * 60)
-    print("[1/5] Finding files...")
+    print("[1/4] Finding files...")
     print("=" * 60)
 
     video_extensions = (".mp4", ".mov")
@@ -51,7 +52,7 @@ def run(api_key, gdrive_path, chunk_length=30):
     # ── Step 2: Install ffmpeg ──────────────────────────────────────────
     print()
     print("=" * 60)
-    print("[2/5] Checking ffmpeg...")
+    print("[2/4] Checking ffmpeg...")
     print("=" * 60)
 
     try:
@@ -62,26 +63,35 @@ def run(api_key, gdrive_path, chunk_length=30):
         subprocess.run(["apt-get", "install", "-qq", "ffmpeg"], check=True, capture_output=True)
         print("  ffmpeg installed.")
 
-    # ── Step 3: Whisper transcription ───────────────────────────────────
+    # ── Step 3: Whisper + Jscript extraction (parallel) ─────────────────
     print()
     print("=" * 60)
-    print("[3/5] Running Whisper transcription...")
+    print("[3/4] Running Whisper transcription & script extraction in parallel...")
     print("=" * 60)
 
-    transcription = generate_whisper_script(video_path, chunk_length=chunk_length)
+    transcription = None
+    jscript_text = None
 
-    # ── Step 4: Extract script text ─────────────────────────────────────
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        whisper_future = executor.submit(
+            generate_whisper_script, video_path, chunk_length=chunk_length
+        )
+        jscript_future = executor.submit(
+            extract_jscript, script_path, api_key=api_key
+        )
+
+        for future in as_completed([whisper_future, jscript_future]):
+            if future == whisper_future:
+                transcription = future.result()
+                print("  ✓ Whisper transcription complete.")
+            else:
+                jscript_text = future.result()
+                print("  ✓ Script extraction complete.")
+
+    # ── Step 4: Align and export ────────────────────────────────────────
     print()
     print("=" * 60)
-    print("[4/5] Extracting dialogue from script...")
-    print("=" * 60)
-
-    jscript_text = extract_jscript(script_path, api_key=api_key)
-
-    # ── Step 5: Align and export ────────────────────────────────────────
-    print()
-    print("=" * 60)
-    print("[5/5] Aligning transcription with script...")
+    print("[4/4] Aligning transcription with script...")
     print("=" * 60)
 
     # Output .ass file next to the video
