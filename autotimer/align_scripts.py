@@ -2,7 +2,6 @@ import pysubs2
 import os
 import json
 from google import genai
-from google.genai import types
 from .utils import load_prompt
 
 
@@ -43,10 +42,10 @@ def align_scripts(transcription, jscript_text, output_path, api_key):
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
         contents=[prompt],
-        config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=20000),
-            service_tier="flex",
-        ),
+        config={
+            "thinking_config": {"thinking_budget": 20000},
+            "service_tier": "flex",
+        },
     )
 
     if response.usage_metadata:
