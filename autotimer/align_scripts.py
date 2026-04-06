@@ -44,7 +44,6 @@ def align_scripts(transcription, jscript_text, output_path, api_key):
         contents=[prompt],
         config={
             "thinking_config": {"thinking_budget": 20000},
-            "service_tier": "flex",
         },
     )
 

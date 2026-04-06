@@ -45,7 +45,6 @@ def extract_jscript(pdf_path, api_key):
             ),
             prompt,
         ],
-        config={"service_tier": "flex"},
     )
 
     extracted_text = response.text or ""
