@@ -16,8 +16,8 @@ The easiest way to use AutoTimer is via the provided Jupyter Notebook. It's desi
 The pipeline will:
 - Install AutoTimer directly from GitHub.
 - Mount your Google Drive.
-- Transcribe the video.
-- Extract dialogue from the script.
+- Transcribe the video (cached to `{video}.whisper.json` for reuse).
+- Extract dialogue from the script (cached to `{script}.jscript.txt` for reuse).
 - Align them and save the `.ass` subtitle file next to your video.
 
 To enable translation, set `translate=True` in the notebook cell (see [Python Usage](#️-python-usage) below).
@@ -49,6 +49,17 @@ autotimer.run(
 | `gdrive_path` | `str` | — | Path to the folder containing the video and script files |
 | `chunk_length` | `int` | `30` | Whisper sliding window length in seconds |
 | `translate` | `bool` | `False` | Translate subtitles to Brazilian Portuguese |
+
+### Caching
+
+After the first run, intermediate results are saved next to your files:
+
+| File | Contents |
+|---|---|
+| `{video}.whisper.json` | Whisper transcription segments |
+| `{script}.jscript.txt` | Extracted dialogue lines |
+
+On subsequent runs these files are loaded automatically, skipping the Whisper and/or Gemini extraction steps. Delete them to force a fresh run.
 
 ### Translation
 
