@@ -2,7 +2,7 @@
 
 AutoTimer is a Python tool designed to create perfect `.ass` subtitles for Japanese videos by aligning audio transcription with an official PDF/DOCX script.
 
-It leverages **faster-whisper** (large-v2) for transcription and **Gemini 3 Flash Preview** for script extraction and intelligent semantic alignment.
+It leverages **faster-whisper** (large-v2) for transcription, **Gemini 2.5 Pro** for script extraction (OCR), and **Gemini 2.0 Flash Preview** for intelligent semantic alignment — with optional Brazilian Portuguese translation done in the same alignment pass.
 
 ## 🚀 Quick Start (Google Colab)
 
@@ -19,6 +19,8 @@ The pipeline will:
 - Transcribe the video.
 - Extract dialogue from the script.
 - Align them and save the `.ass` subtitle file next to your video.
+
+To enable translation, set `translate=True` in the notebook cell (see [Python Usage](#️-python-usage) below).
 
 ## 📦 Installation (Local/CLI)
 
@@ -39,6 +41,36 @@ autotimer.run(
 )
 ```
 
+### Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `api_key` | `str` | — | Google Gemini API key |
+| `gdrive_path` | `str` | — | Path to the folder containing the video and script files |
+| `chunk_length` | `int` | `30` | Whisper sliding window length in seconds |
+| `translate` | `bool` | `False` | Translate subtitles to Brazilian Portuguese |
+
+### Translation
+
+When `translate=True`, Gemini translates each subtitle to Brazilian Portuguese during the alignment step — no extra API call needed. Each subtitle line is formatted as:
+
+```
+portuguese {japanese}
+```
+
+Example:
+```
+Hoje está um dia muito bonito, não é? {今日はとてもいい天気ですね。}
+```
+
+```python
+autotimer.run(
+    api_key="YOUR_GEMINI_API_KEY",
+    gdrive_path="/path/to/your/files",
+    translate=True
+)
+```
+
 ## 📂 Requirements
 
 - **Python 3.9+**
@@ -52,7 +84,7 @@ autotimer.run(
   - `pipeline.py`: Main orchestrator (`run` function).
   - `generate_whisper.py`: Whisper transcription logic.
   - `extract_jscript.py`: Script extraction via Gemini.
-  - `align_scripts.py`: Semantic alignment via Gemini.
+  - `align_scripts.py`: Semantic alignment (and optional translation) via Gemini.
 - `AutoTimer.ipynb`: The single-cell Colab notebook.
 - `pyproject.toml`: Package configuration and dependencies.
 

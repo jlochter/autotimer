@@ -8,7 +8,7 @@ from .extract_jscript import extract_jscript
 from .align_scripts import align_scripts
 
 
-def run(api_key, gdrive_path, chunk_length=30):
+def run(api_key, gdrive_path, chunk_length=30, translate=False):
     """
     Run the full AutoTimer pipeline.
 
@@ -20,6 +20,7 @@ def run(api_key, gdrive_path, chunk_length=30):
         api_key: Google Gemini API key.
         gdrive_path: Path to directory containing video (.mp4/.mov) and script (.pdf/.docx/.doc) files.
         chunk_length: The length of the sliding window for transcription (default: 30).
+        translate: If True, subtitles are formatted as "portuguese {japanese}" (default: False).
     """
     if not api_key:
         raise ValueError("api_key is required. Get one at https://aistudio.google.com/")
@@ -98,7 +99,7 @@ def run(api_key, gdrive_path, chunk_length=30):
     base_name = os.path.splitext(video_files[0])[0]
     output_path = os.path.join(gdrive_path, f"{base_name}.ass")
 
-    align_scripts(transcription, jscript_text, output_path, api_key=api_key)
+    align_scripts(transcription, jscript_text, output_path, api_key=api_key, translate=translate)
 
     print()
     print("=" * 60)
