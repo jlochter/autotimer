@@ -35,9 +35,9 @@ def extract_jscript(pdf_path, api_key):
     # Load prompt from file
     prompt = load_prompt("extract_script.md")
 
-    print("  Sending script to Gemini gemini-3-flash-preview...")
+    print("  Sending script to Gemini gemini-2.5-pro...")
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-pro",
         contents=[
             types.Part.from_bytes(
                 data=pdf_data,
