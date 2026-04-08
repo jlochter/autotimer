@@ -2,7 +2,7 @@ import pysubs2
 import os
 import json
 from google import genai
-from .utils import load_prompt
+from .utils import load_prompt, calculate_cost
 
 
 def align_scripts(transcription, jscript_text, output_path, api_key, translate=False):
@@ -72,9 +72,13 @@ def align_scripts(transcription, jscript_text, output_path, api_key, translate=F
     )
 
     if response.usage_metadata:
-        print(f"  Tokens — Prompt: {response.usage_metadata.prompt_token_count}, "
-              f"Output: {response.usage_metadata.candidates_token_count}, "
+        prompt_tokens = response.usage_metadata.prompt_token_count
+        output_tokens = response.usage_metadata.candidates_token_count
+        cost = calculate_cost("gemini-3-flash-preview", prompt_tokens, output_tokens)
+        print(f"  Tokens — Prompt: {prompt_tokens}, Output: {output_tokens}, "
               f"Total: {response.usage_metadata.total_token_count}")
+        if cost is not None:
+            print(f"  Cost   — ${cost:.4f}")
 
     # Generate ASS file using pysubs2
     print(f"  Generating ASS subtitle file...")

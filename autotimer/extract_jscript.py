@@ -3,7 +3,7 @@
 import os
 from google import genai
 from google.genai import types
-from .utils import load_prompt
+from .utils import load_prompt, calculate_cost
 
 
 def extract_jscript(pdf_path, api_key):
@@ -50,9 +50,13 @@ def extract_jscript(pdf_path, api_key):
     extracted_text = response.text or ""
 
     if response.usage_metadata:
-        print(f"  Tokens — Prompt: {response.usage_metadata.prompt_token_count}, "
-              f"Output: {response.usage_metadata.candidates_token_count}, "
+        prompt_tokens = response.usage_metadata.prompt_token_count
+        output_tokens = response.usage_metadata.candidates_token_count
+        cost = calculate_cost("gemini-2.5-pro", prompt_tokens, output_tokens)
+        print(f"  Tokens — Prompt: {prompt_tokens}, Output: {output_tokens}, "
               f"Total: {response.usage_metadata.total_token_count}")
+        if cost is not None:
+            print(f"  Cost   — ${cost:.4f}")
 
     line_count = len([l for l in extracted_text.strip().split("\n") if l.strip()])
     print(f"  Extraction complete: {line_count} dialogue lines found.")
