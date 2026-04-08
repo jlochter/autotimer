@@ -51,10 +51,11 @@ def extract_jscript(pdf_path, api_key):
 
     if response.usage_metadata:
         prompt_tokens = response.usage_metadata.prompt_token_count
-        output_tokens = response.usage_metadata.candidates_token_count
+        reasoning_tokens = response.usage_metadata.thoughts_token_count or 0
+        output_tokens = (response.usage_metadata.candidates_token_count or 0) + reasoning_tokens
         cost = calculate_cost("gemini-2.5-pro", prompt_tokens, output_tokens)
-        print(f"  Tokens — Prompt: {prompt_tokens}, Output: {output_tokens}, "
-              f"Total: {response.usage_metadata.total_token_count}")
+        print(f"  Tokens — Prompt: {prompt_tokens}, Output: {response.usage_metadata.candidates_token_count}, "
+              f"Reasoning: {reasoning_tokens}, Total: {response.usage_metadata.total_token_count}")
         if cost is not None:
             print(f"  Cost   — ${cost:.4f}")
 
