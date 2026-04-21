@@ -62,6 +62,10 @@ def align_scripts(transcription, jscript_text, output_path, api_key, translate=F
         few_shot_result=few_shot_result,
     )
 
+    prompt_save_path = os.path.join(os.path.dirname(output_path), "alignment_prompt.txt")
+    with open(prompt_save_path, "w", encoding="utf-8") as f:
+        f.write(prompt)
+
     print("  Sending alignment request to Gemini gemini-3-flash-preview (with Thinking)...")
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
