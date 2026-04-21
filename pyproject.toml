@@ -21,6 +21,7 @@ dependencies = [
     "google-genai",
     "pysubs2",
     "torch",
+    "openai",
 ]
 
 [project.urls]

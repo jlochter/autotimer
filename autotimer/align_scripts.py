@@ -5,9 +5,9 @@ from google import genai
 from .utils import load_prompt, calculate_cost
 
 
-def align_scripts(transcription, jscript_text, output_path, api_key, translate=False):
+def align_scripts(transcription, jscript_text, output_path, api_key=None, translate=False, openrouter_key=None, openrouter_model="nvidia/nemotron-3-super-120b-a12b:free"):
     """
-    Aligns Whisper transcription with extracted script text using Gemini.
+    Aligns Whisper transcription with extracted script text using Gemini or OpenRouter.
     Generates ASS subtitles using pysubs2.
 
     Args:
@@ -16,11 +16,22 @@ def align_scripts(transcription, jscript_text, output_path, api_key, translate=F
         output_path: Path to output .ass subtitle file.
         api_key: Gemini API Key.
         translate: If True, each subtitle is formatted as "portuguese {japanese}".
+        openrouter_key: OpenRouter API key.
+        openrouter_model: OpenRouter model to use.
 
     Returns:
         Path to the generated .ass file.
     """
-    client = genai.Client(api_key=api_key)
+    if openrouter_key:
+        from openai import OpenAI
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=openrouter_key,
+        )
+    elif api_key:
+        client = genai.Client(api_key=api_key)
+    else:
+        raise ValueError("Either api_key or openrouter_key must be provided.")
 
     # Format transcription for the prompt
     formatted_transcription = []
@@ -66,24 +77,43 @@ def align_scripts(transcription, jscript_text, output_path, api_key, translate=F
     with open(prompt_save_path, "w", encoding="utf-8") as f:
         f.write(prompt)
 
-    print("  Sending alignment request to Gemini gemini-3-flash-preview (with Thinking)...")
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=[prompt],
-        config={
-            "thinking_config": {"thinking_budget": 20000},
-        },
-    )
+    if openrouter_key:
+        print(f"  Sending alignment request to OpenRouter ({openrouter_model})...")
+        completion = client.chat.completions.create(
+            model=openrouter_model,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            extra_body={"reasoning": {"enabled": True}}
+        )
+        response_text = completion.choices[0].message.content
+        
+        # OpenRouter (OpenAI client) may not return standard usage metadata in the exact same format
+        if completion.usage:
+            prompt_tokens = completion.usage.prompt_tokens
+            output_tokens = completion.usage.completion_tokens
+            total_tokens = completion.usage.total_tokens
+            print(f"  Tokens — Prompt: {prompt_tokens}, Output: {output_tokens}, Total: {total_tokens}")
+    else:
+        print("  Sending alignment request to Gemini gemini-3-flash-preview (with Thinking)...")
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=[prompt],
+            config={
+                "thinking_config": {"thinking_budget": 20000},
+            },
+        )
+        response_text = response.text
 
-    if response.usage_metadata:
-        prompt_tokens = response.usage_metadata.prompt_token_count
-        reasoning_tokens = response.usage_metadata.thoughts_token_count or 0
-        output_tokens = (response.usage_metadata.candidates_token_count or 0) + reasoning_tokens
-        cost = calculate_cost("gemini-3-flash-preview", prompt_tokens, output_tokens)
-        print(f"  Tokens — Prompt: {prompt_tokens}, Output: {response.usage_metadata.candidates_token_count}, "
-              f"Reasoning: {reasoning_tokens}, Total: {response.usage_metadata.total_token_count}")
-        if cost is not None:
-            print(f"  Cost   — ${cost:.4f}")
+        if response.usage_metadata:
+            prompt_tokens = response.usage_metadata.prompt_token_count
+            reasoning_tokens = response.usage_metadata.thoughts_token_count or 0
+            output_tokens = (response.usage_metadata.candidates_token_count or 0) + reasoning_tokens
+            cost = calculate_cost("gemini-3-flash-preview", prompt_tokens, output_tokens)
+            print(f"  Tokens — Prompt: {prompt_tokens}, Output: {response.usage_metadata.candidates_token_count}, "
+                  f"Reasoning: {reasoning_tokens}, Total: {response.usage_metadata.total_token_count}")
+            if cost is not None:
+                print(f"  Cost   — ${cost:.4f}")
 
     # Generate ASS file using pysubs2
     print(f"  Generating ASS subtitle file...")
@@ -130,7 +160,7 @@ def align_scripts(transcription, jscript_text, output_path, api_key, translate=F
         encoding=1
     )
 
-    lines = response.text.strip().split("\n")
+    lines = response_text.strip().split("\n")
     for line in lines:
         if not line.strip():
             continue

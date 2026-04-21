@@ -9,7 +9,7 @@ from .extract_jscript import extract_jscript
 from .align_scripts import align_scripts
 
 
-def run(api_key, gdrive_path, chunk_length=30, translate=False):
+def run(api_key=None, gdrive_path=None, chunk_length=30, translate=False, openrouter_key=None, openrouter_model="nvidia/nemotron-3-super-120b-a12b:free"):
     """
     Run the full AutoTimer pipeline.
 
@@ -25,11 +25,13 @@ def run(api_key, gdrive_path, chunk_length=30, translate=False):
         gdrive_path: Path to directory containing video (.mp4/.mov) and script (.pdf/.docx/.doc) files.
         chunk_length: The length of the sliding window for transcription (default: 30).
         translate: If True, subtitles are formatted as "portuguese {japanese}" (default: False).
+        openrouter_key: OpenRouter API key for using OpenRouter instead of Gemini for alignment.
+        openrouter_model: The OpenRouter model to use (default: nvidia/nemotron-3-super-120b-a12b:free).
     """
-    if not api_key:
-        raise ValueError("api_key is required. Get one at https://aistudio.google.com/")
+    if not api_key and not openrouter_key:
+        raise ValueError("api_key or openrouter_key is required.")
 
-    if not os.path.isdir(gdrive_path):
+    if not gdrive_path or not os.path.isdir(gdrive_path):
         raise FileNotFoundError(f"Directory not found: {gdrive_path}")
 
     # ── Step 1: Find files ──────────────────────────────────────────────
@@ -131,7 +133,7 @@ def run(api_key, gdrive_path, chunk_length=30, translate=False):
     print("[4/4] Aligning transcription with script...")
     print("=" * 60)
 
-    align_scripts(transcription, jscript_text, output_path, api_key=api_key, translate=translate)
+    align_scripts(transcription, jscript_text, output_path, api_key=api_key, translate=translate, openrouter_key=openrouter_key, openrouter_model=openrouter_model)
 
     print()
     print("=" * 60)
